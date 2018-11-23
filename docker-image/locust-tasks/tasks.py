@@ -16,27 +16,26 @@
 
 
 import uuid
+import json
 
 from datetime import datetime
 from locust import HttpLocust, TaskSet, task
 
 
-class MetricsTaskSet(TaskSet):
-    _deviceid = None
+class PostTaskSet(TaskSet):
 
-    def on_start(self):
-        self._deviceid = str(uuid.uuid4())
+    @task(2)
+    def post_guest(self):
+    	headers = {'content-type': 'application/json'}
+        self.client.post(
+            "/rest/insert", 
+            data=json.dumps({"first": "guest_" + str(uuid.uuid4()), "last": str(datetime.now())}), 
+            headers=headers
+        )
 
     @task(1)
-    def login(self):
-        self.client.post(
-            '/login', {"deviceid": self._deviceid})
+    def get_guest_list(self):
+        self.client.get('/rest/query')
 
-    @task(999)
-    def post_metrics(self):
-        self.client.post(
-            "/metrics", {"deviceid": self._deviceid, "timestamp": datetime.now()})
-
-
-class MetricsLocust(HttpLocust):
-    task_set = MetricsTaskSet
+class PostLocust(HttpLocust):
+    task_set = PostTaskSet
